@@ -198,6 +198,13 @@ Nightscout server information must be defined in `include/nightscout_config.h` a
 	// 40-character SHA-1 hash of your Nightscout API secret
 	#define NIGHTSCOUT_API_SECRET	"0123456789abcdef0123456789abcdef01234567"
 
+	// "enteredBy" label stamped on uploaded treatments; required to build
+	#define NIGHTSCOUT_USER		"gnarl"
+
+	// LAN address of the phone running xDrip+ for the WiFi xdrip client;
+	// required for WiFi builds (not used with USE_BLUETOOTH_TETHERING)
+	#define XDRIP_WIFI_HOST		"192.168.1.100"
+
 The SSL layer requires the root certificate used by the Nightscout
 server to be available at compile time in the file `include/root_cert.pem`.
 You can extract it from the output of this command:

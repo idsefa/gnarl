@@ -1,0 +1,7 @@
+#ifndef _PAPERTRAIL_CONFIG_H
+#define _PAPERTRAIL_CONFIG_H
+
+#define PAPERTRAIL_HOST	"xyz.papertrailapp.com"
+#define PAPERTRAIL_PORT	12345
+
+#endif // _PAPERTRAIL_CONFIG_H

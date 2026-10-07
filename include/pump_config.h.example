@@ -1,0 +1,9 @@
+#ifndef _PUMP_CONFIG_H
+#define _PUMP_CONFIG_H
+
+// Replace these values with your pump-specific configuration.
+#define PUMP_ID		"123456"
+#define PUMP_FREQUENCY	916500000
+#define MMTUNE_START	916300000
+
+#endif // _PUMP_CONFIG_H

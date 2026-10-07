@@ -1,0 +1,19 @@
+#ifndef _NIGHTSCOUT_CONFIG_H
+#define _NIGHTSCOUT_CONFIG_H
+
+// DNS hostname, not a URL.
+#define NIGHTSCOUT_HOST		"your.nightscout.hostname"
+
+// 40-character SHA-1 hash of your Nightscout API secret.
+#define NIGHTSCOUT_API_SECRET	"0123456789abcdef0123456789abcdef01234567"
+
+// "enteredBy" label stamped on uploaded treatments (lib/nightscout/treatments.c).
+// Required to compile; any string works.
+#define NIGHTSCOUT_USER		"gnarl"
+
+// LAN address of the phone running xDrip+, used by the WiFi xdrip client
+// (lib/nightscout/xdrip.c, port 17580).  Required for WiFi builds; not used
+// when USE_BLUETOOTH_TETHERING is defined.
+#define XDRIP_WIFI_HOST		"192.168.1.100"
+
+#endif // _NIGHTSCOUT_CONFIG_H

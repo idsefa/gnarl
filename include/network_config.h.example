@@ -1,0 +1,13 @@
+#ifndef _NETWORK_CONFIG_H
+#define _NETWORK_CONFIG_H
+
+// WiFi configuration.
+#define WIFI_SSID	"network name"
+#define WIFI_PASSWORD	"network password"
+
+// Bluetooth tethering configuration. Uncomment these instead of WiFi
+// settings when building with the tether component.
+// #define USE_BLUETOOTH_TETHERING
+// #define TETHER_ADDRESS	"12:34:56:78:9A:BC"
+
+#endif // _NETWORK_CONFIG_H

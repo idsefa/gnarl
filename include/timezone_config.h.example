@@ -1,0 +1,7 @@
+#ifndef _TIMEZONE_CONFIG_H
+#define _TIMEZONE_CONFIG_H
+
+// POSIX TZ string. The friendly "Area/City" format is not supported.
+#define TZ	"EST5EDT,M3.2.0,M11.1.0"
+
+#endif // _TIMEZONE_CONFIG_H
