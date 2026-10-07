@@ -425,6 +425,15 @@ static void gnarl_loop(void *unused) {
 
 void start_gnarl_task(void) {
 	request_queue = xQueueCreate(QUEUE_LENGTH, sizeof(rfspy_request_t));
-	// Start radio task with high priority to avoid receiving truncated packets.
-	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, tskIDLE_PRIORITY + 24, &gnarl_loop_handle);
+	// Pin the radio task to core 1.  The BT controller and NimBLE host both run
+	// on core 0 (CONFIG_BT_*_PINNED_TO_CORE_0) at priority 21, while this task
+	// runs at 24 and, during a send_and_listen burst (Loop issues repeat_count
+	// 255 with delay_ms 0), transmits back-to-back for ~5.6 s with no yield:
+	// usleep(0) in the IDF does a busy-wait (esp_rom_delay_us) rather than
+	// blocking.  On the shared core that starves the Bluetooth stack for longer
+	// than the link supervision timeout, so the phone drops the BLE connection
+	// mid-session.  Pinning the radio to core 1 leaves core 0 free for BLE and
+	// keeps the RF timing untouched.
+	xTaskCreatePinnedToCore(gnarl_loop, "gnarl", 4096, 0,
+				tskIDLE_PRIORITY + 24, &gnarl_loop_handle, 1);
 }
