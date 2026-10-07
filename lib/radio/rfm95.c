@@ -217,12 +217,24 @@ void transmit(uint8_t *buf, int count) {
 		// Wait until there is room for at least fifoSize - fifoThreshold bytes in the FIFO.
 		// Err on the short side here to avoid TXFIFO underflow.
 		usleep(FIFO_SIZE / 4 * MILLISECOND);
-		for (;;) {
+		// Bound this wait: the original unbounded loop spun forever if the TX
+		// FIFO never drained, wedging gnarl_loop (the pump looked lost while
+		// BLE and the display kept running, and only a reset recovered).
+		bool room = false;
+		for (int w = 0; w < MAX_WAIT; w++) {
 			if (!fifo_threshold_exceeded()) {
-				avail = FIFO_SIZE - FIFO_THRESHOLD;
+				room = true;
 				break;
 			}
+			usleep(1 * MILLISECOND);
 		}
+		if (!room) {
+			sequencer_stop();
+			set_mode_sleep();
+			ESP_LOGI(TAG, "transmit FIFO stuck; aborting");
+			return;
+		}
+		avail = FIFO_SIZE - FIFO_THRESHOLD;
 	}
 	if (!wait_for_fifo_room()) {
 		return;
@@ -256,6 +268,11 @@ typedef void wait_fn_t(int);
 static int rx_common(wait_fn_t wait_fn, uint8_t *buf, int count, int timeout) {
 	ESP_LOGD(TAG, "starting receive");
 	gpio_intr_enable(DIO2);
+	// Clear stale IRQ flags before receiving.  The SyncAddressMatch flag is
+	// latched and was never cleared, so after the first packet of a session
+	// packet_seen() stayed true and every later receive returned FIFO garbage
+	// instead of waiting for a packet; only a radio reset recovered.
+	write_register(REG_IRQ_FLAGS_1, 0xFF);
 	set_mode_receive();
 	if (!packet_seen()) {
 		// Stay in RX mode.

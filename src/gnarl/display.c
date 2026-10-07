@@ -127,7 +127,10 @@ void display_update(display_op_t op, int arg) {
 void display_init(void) {
 	oled_init();
 	display_queue = xQueueCreate(QUEUE_LENGTH, sizeof(display_command_t));
-	xTaskCreate(display_loop, "display", 2048, 0, 10, 0);
+	// 2048 bytes was too small: the u8g2 draw calls overflowed the task stack
+	// ("A stack overflow in task display"), resetting the chip and dropping
+	// BLE and RF.  ESP-IDF xTaskCreate takes the stack size in bytes.
+	xTaskCreate(display_loop, "display", 8192, 0, 10, 0);
 	display_update(SHOW_STATUS, 0);
 
 	// Enable interrupt on button press.
