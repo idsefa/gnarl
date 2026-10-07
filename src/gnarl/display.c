@@ -47,6 +47,13 @@ static void format_time_ago(char *buf) {
 	sprintf(buf, "%dh%dm", hr, min);
 }
 
+static void format_uptime(char *buf) {
+	int secs = esp_timer_get_time() / 1000000;
+	sprintf(buf, "up %d:%02d:%02d", secs / 3600, (secs / 60) % 60, secs % 60);
+}
+
+static void render(void);
+
 static void update(display_command_t cmd) {
 	switch (cmd.op) {
 	case PHONE_RSSI:
@@ -67,48 +74,65 @@ static void update(display_command_t cmd) {
 	default:
 		break;
 	}
-	oled_on();
-	oled_clear();
-
-	oled_font_medium();
-        oled_align_center();
-        oled_draw_string(64, 15, connected ? "Connected" : "Disconnected");
-
-	oled_font_small();
-	oled_align_left();
-        oled_draw_string(5, 32, "Last command:");
-        oled_draw_string(5, 46, "Phone RSSI:");
-        oled_draw_string(5, 60, "Pump  RSSI:");
-
-	oled_align_right();
-	char buf[16];
-	format_time_ago(buf);
-	oled_draw_string(122, 32, buf);
-	if (connected) {
-		sprintf(buf, "%d", phone_rssi);
-		oled_draw_string(122, 46, buf);
-		sprintf(buf, "%d", pump_rssi);
-		oled_draw_string(122, 60, buf);
-	} else {
-		oled_draw_string(122, 46, "--");
-		oled_draw_string(122, 60, "--");
-	}
-
-        oled_update();
+	render();
 	if (DISPLAY_TIMEOUT > 0) {
 		usleep(DISPLAY_TIMEOUT*SECONDS);
 		oled_off();
 	}
 }
 
+static void render(void) {
+	oled_on();
+	oled_clear();
+
+	// Running uptime, refreshed once a second by display_loop.  If it stops
+	// advancing the firmware is hung.
+	oled_font_small();
+	oled_align_center();
+	char buf[16];
+	format_uptime(buf);
+	oled_draw_string(64, 9, buf);
+
+	oled_font_medium();
+	oled_align_center();
+	oled_draw_string(64, 24, connected ? "Connected" : "Disconnected");
+
+	oled_font_small();
+	oled_align_left();
+	oled_draw_string(5, 38, "Last command:");
+	oled_draw_string(5, 50, "Phone RSSI:");
+	oled_draw_string(5, 62, "Pump  RSSI:");
+
+	oled_align_right();
+	format_time_ago(buf);
+	oled_draw_string(122, 38, buf);
+	if (connected) {
+		sprintf(buf, "%d", phone_rssi);
+		oled_draw_string(122, 50, buf);
+		sprintf(buf, "%d", pump_rssi);
+		oled_draw_string(122, 62, buf);
+	} else {
+		oled_draw_string(122, 50, "--");
+		oled_draw_string(122, 62, "--");
+	}
+
+	oled_update();
+}
+
+// Redraw once a second so the uptime clock stays live.  The render is cheap
+// (a full u8g2 redraw over I2C takes ~16 ms), and it is the only way to tell
+// a hung firmware from an idle one at a glance: a frozen clock means hung.
+#define DISPLAY_REFRESH_MS	1000
+
 static void display_loop(void *unused) {
 	for (;;) {
 		display_command_t cmd;
-		if (!xQueueReceive(display_queue, &cmd, pdMS_TO_TICKS(100))) {
-			continue;
+		if (xQueueReceive(display_queue, &cmd, pdMS_TO_TICKS(DISPLAY_REFRESH_MS))) {
+			ESP_LOGD(TAG, "display_loop: op %d arg %d", cmd.op, cmd.arg);
+			update(cmd);
+		} else {
+			render();
 		}
-		ESP_LOGD(TAG, "display_loop: op %d arg %d", cmd.op, cmd.arg);
-		update(cmd);
 	}
 }
 
