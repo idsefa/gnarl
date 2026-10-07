@@ -27,7 +27,8 @@ static int phone_rssi;
 static int pump_rssi;
 static int command_time;  // seconds
 
-#define DISPLAY_TIMEOUT	5  // seconds
+// Keep the OLED on while debugging board bring-up.
+#define DISPLAY_TIMEOUT	0  // seconds; 0 disables auto-off
 
 static void format_time_ago(char *buf) {
 	int now = esp_timer_get_time() / 1000000;
@@ -51,15 +52,15 @@ static void update(display_command_t cmd) {
 	case PHONE_RSSI:
 		phone_rssi = cmd.arg;
 		ESP_LOGD(TAG, "phone RSSI = %d", phone_rssi);
-		return;
+		break;
 	case PUMP_RSSI:
 		pump_rssi = cmd.arg;
 		ESP_LOGD(TAG, "pump RSSI = %d", pump_rssi);
-		return;
+		break;
 	case COMMAND_TIME:
 		command_time = cmd.arg;
 		ESP_LOGD(TAG, "command time = %d", command_time);
-		return;
+		break;
 	case CONNECTED:
 		connected = cmd.arg;
 		break;
@@ -94,8 +95,10 @@ static void update(display_command_t cmd) {
 	}
 
         oled_update();
-	usleep(DISPLAY_TIMEOUT*SECONDS);
-	oled_off();
+	if (DISPLAY_TIMEOUT > 0) {
+		usleep(DISPLAY_TIMEOUT*SECONDS);
+		oled_off();
+	}
 }
 
 static void display_loop(void *unused) {

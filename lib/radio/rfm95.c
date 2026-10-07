@@ -109,6 +109,14 @@ void rfm95_init(void) {
 	// Use 64 samples for RSSI.
 	write_register(REG_RSSI_CONFIG, 5);
 
+	// Select the PA_BOOST output with maximum power.  The RFM95W module wires
+	// its antenna to PA_BOOST, but the SX1276 reset default (0x4F) has bit 7
+	// clear (RFO output with a low power setting), so the module transmitted
+	// weakly and the pump never answered.  Receive uses the separate LNA path
+	// and was unaffected, which is why packets could be received but not sent.
+	write_register(REG_PA_CONFIG, PA_BOOST | PA_OUTPUT_MAX);
+	write_register(REG_PA_DAC, 0x84);  // +20 dBm on PA_BOOST
+
 	// 200 kHz channel bandwidth (mantissa = 20, exp = 1)
 	write_register(REG_RX_BW, (1 << RX_BW_MANT_SHIFT) | 1);
 

@@ -209,6 +209,8 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 		connected = true;
 		display_update(CONNECTED, true);
 		connection_handle = e->connect.conn_handle;
+		response_count_notify_state = 1;
+		timer_tick_notify_state = 1;
 		ESP_LOGI(TAG, "connected");
 		ESP_LOGD(TAG, "connection handle %04X", connection_handle);
 		ESP_LOGD(TAG, "response count notify handle %04X", response_count_notify_handle);
@@ -216,6 +218,8 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 		break;
 	case BLE_GAP_EVENT_DISCONNECT:
 		connected = false;
+		response_count_notify_state = 0;
+		timer_tick_notify_state = 0;
 		display_update(CONNECTED, false);
 		ESP_LOGD(TAG, "disconnected");
 		advertise();
@@ -279,7 +283,10 @@ static void response_notify(void) {
 	}
 	struct os_mbuf *om = ble_hs_mbuf_from_flat(&response_count, sizeof(response_count));
 	int err = ble_gattc_notify_custom(connection_handle, response_count_notify_handle, om);
-	assert(!err);
+	if (err) {
+		ESP_LOGE(TAG, "response count notify failed: %d", err);
+		return;
+	}
 	ESP_LOGD(TAG, "notify for response count %d", response_count);
 }
 
@@ -320,7 +327,10 @@ static void timer_tick_callback(void *arg) {
 	}
 	struct os_mbuf *om = ble_hs_mbuf_from_flat(&timer_tick, sizeof(timer_tick));
 	int err = ble_gattc_notify_custom(connection_handle, timer_tick_notify_handle, om);
-	assert(!err);
+	if (err) {
+		ESP_LOGE(TAG, "timer tick notify failed: %d", err);
+		return;
+	}
 	ESP_LOGD(TAG, "notify for timer tick");
 }
 

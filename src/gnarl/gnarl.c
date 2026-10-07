@@ -355,13 +355,19 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 static void gnarl_loop(void *unused) {
 	ESP_LOGD(TAG, "starting gnarl_loop");
 	esp_task_wdt_add(0);
-	const int timeout_ms = 60*MILLISECONDS;
+	// Keep well under CONFIG_ESP_TASK_WDT_TIMEOUT_S (60 s): a 60 s receive
+	// timeout left the watchdog unfed right at its deadline, so an idle
+	// device tripped the task WDT every couple of minutes.
+	const int timeout_ms = 1*MILLISECONDS;
 	for (;;) {
 		rfspy_request_t req;
+		// Reset the watchdog every iteration, not just after a command:
+		// with no phone connected the queue receive always times out, and
+		// resetting only on a command fired the task WDT every 60 seconds.
+		esp_task_wdt_reset();
 		if (!xQueueReceive(request_queue, &req, pdMS_TO_TICKS(timeout_ms))) {
 			continue;
 		}
-		esp_task_wdt_reset();
 		switch (req.command) {
 		case CmdGetState:
 			ESP_LOGI(TAG, "CmdGetState");

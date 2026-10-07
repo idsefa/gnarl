@@ -52,6 +52,8 @@ static char *treatment_json(nightscout_treatment_t *t) {
 	cJSON_AddItemToObject(root, "enteredBy",  cJSON_CreateString(NIGHTSCOUT_USER));
 
 	const char *e;
+	// buf must live as long as e: it is referenced after the switch.
+	char buf[64];
 	switch (t->type) {
 	case NS_BG_CHECK:
 		e = "BG Check";
@@ -76,7 +78,6 @@ static char *treatment_json(nightscout_treatment_t *t) {
 		break;
 	default:
 		ESP_LOGE(TAG, "unknown treatment type (%d)", t->type);
-		char buf[64];
 		sprintf(buf, "unknown (%d)", t->type);
 		e = buf;
 		break;

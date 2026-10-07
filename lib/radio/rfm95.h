@@ -20,6 +20,7 @@
 #define REG_FRF_MSB		0x06
 #define REG_FRF_MID		0x07
 #define REG_FRF_LSB		0x08
+#define REG_PA_CONFIG		0x09
 #define REG_LNA			0x0C
 #define REG_RX_CONFIG		0x0D
 #define REG_RSSI_CONFIG		0x0E
@@ -47,6 +48,11 @@
 #define REG_IRQ_FLAGS_2		0x3F
 #define REG_DIO_MAPPING_1	0x40
 #define REG_VERSION		0x42
+#define REG_PA_DAC		0x4D
+
+// REG_PA_CONFIG
+#define PA_BOOST		(1 << 7)
+#define PA_OUTPUT_MAX		0x0F
 
 // REG_OP_MODE
 #define FSK_OOK_MODE		(0 << 7)
